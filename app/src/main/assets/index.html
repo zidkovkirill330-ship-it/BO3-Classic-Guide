@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#111111">
+<title>BO3 Zombies — Классический гид</title>
+<style>
+:root{--orange:#ff6a00;--bg:#101010;--panel:#1c1c1c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:white;font-family:Arial,sans-serif}
+header{padding:22px 16px;background:linear-gradient(135deg,#080808,#332014);border-bottom:2px solid var(--orange)}
+h1{font-size:22px;margin:0 0 8px}
+header p{color:#ddd;margin:0}
+nav{display:flex;gap:7px;overflow:auto;padding:10px;background:#151515;position:sticky;top:0}
+button{background:#252525;color:white;border:1px solid #444;border-radius:9px;padding:11px;font-weight:bold}
+button.active,.primary{background:var(--orange);color:#111}
+main{padding:14px;max-width:760px;margin:auto}
+.section{display:none}.section.active{display:block}
+.card{background:var(--panel);border:1px solid #383838;border-radius:13px;padding:14px;margin:10px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.mapbtn{text-align:left;min-height:70px}
+.mapbtn strong{display:block;color:#ff8a32;margin-bottom:6px}
+.step,.check{display:flex;gap:10px;padding:11px 0;border-bottom:1px solid #383838;line-height:1.4}
+.num{background:var(--orange);color:#111;border-radius:50%;min-width:27px;height:27px;display:grid;place-items:center;font-weight:bold}
+.small{font-size:12px;color:#bbb}
+input[type=range]{width:100%;accent-color:var(--orange)}
+footer{text-align:center;color:#777;padding:22px;font-size:11px}
+@media(max-width:420px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+<h1>CALL OF DUTY: BLACK OPS III</h1>
+<p>Зомби-режим · классический гид по шагам</p>
+<p style="color:#ff8a32;margin-top:12px">ЧЁРНЫЙ × ОРАНЖЕВЫЙ</p>
+</header>
+
+<nav>
+<button class="active" data-tab="maps">Карты</button>
+<button data-tab="steps">Шаги</button>
+<button data-tab="weapons">Оружие</button>
+<button data-tab="checklist">Чек-лист</button>
+<button data-tab="settings">Настройки</button>
+</nav>
+
+<main>
+<section id="maps" class="section active">
+<h2>Выбери карту</h2>
+<div id="mapgrid" class="grid"></div>
+<div class="card">
+<h3 id="maptitle">Калаш</h3>
+<p id="mapdesc">Выбери карту, чтобы открыть описание и этапы.</p>
+<button class="primary" onclick="openSteps()">Открыть шаги</button>
+</div>
+</section>
+
+<section id="steps" class="section">
+<h2 id="stepheading">Шаги прохождения</h2>
+<div class="card" id="stepcontent"></div>
+<button onclick="nextMap()">Следующая карта →</button>
+</section>
+
+<section id="weapons" class="section">
+<h2>Оружие и экипировка</h2>
+<div class="card"><h3>Выбор оружия</h3><p>Выбирай оружие под свой стиль игры, следи за боезапасом и планируй траты очков.</p></div>
+<div class="card"><h3>Улучшение</h3><p>Перед улучшением подготовь запас очков и проверь, что путь к станции открыт.</p></div>
+<div class="card"><h3>Советы</h3><p>Двигайся по кругу, избегай углов и перезаряжайся в безопасный момент.</p></div>
+</section>
+
+<section id="checklist" class="section">
+<h2>Чек-лист раунда</h2>
+<div class="card" id="checks"></div>
+<button onclick="resetChecks()">Сбросить отметки</button>
+</section>
+
+<section id="settings" class="section">
+<h2>Настройки</h2>
+<div class="card">
+<label>Громкость интерфейса: <span id="volnum">40</span>%</label>
+<input id="volume" type="range" min="0" max="100" value="40">
+<p><label><input id="sound" type="checkbox" checked> Звуковые сигналы</label></p>
+<button onclick="saveSettings()">Сохранить</button>
+<p id="saved" class="small"></p>
+</div>
+<div class="card"><p>Фанатский справочник. Не является официальным приложением Activision или PlayStation.</p></div>
+</section>
+</main>
+
+<footer>Фанатский справочник · BO3 Zombies</footer>
+
+<script>
+const maps=[
+["Калаш","Классический маршрут: открывай проходы, готовь снаряжение и выполняй этапы по порядку.",["Набери стартовые очки, уничтожая зомби.","Открой первый проход и изучи безопасный маршрут.","Активируй доступные механизмы карты.","Подготовь снаряжение и запас боеприпасов.","Выполняй цель карты поэтапно, проверяя прогресс.","Перед заключительным этапом пополни ресурсы."]],
+["The Giant","Компактные маршруты и постепенное открытие зон.",["Набери очки на стартовой площадке.","Открывай проходы по одному.","Включи питание, если оно требуется.","Проверь полезные станции.","Улучши оружие и продолжай выполнять цели."]],
+["Shadows of Evil","Большая городская карта.",["Набери стартовые очки.","Открой ближайшие переходы.","Активируй доступные механизмы районов.","Собери предметы для текущего этапа.","Проверь прогресс и переходи к следующей цели."]],
+["Der Eisendrache","Планируй путь между важными точками.",["Набери очки и открой замок.","Активируй питание и проверь устройства.","Изучи доступные испытания.","Подготовь оружие и боезапас.","Заверши этапы задания последовательно."]],
+["Zetsubou No Shima","Островная карта с несколькими зонами.",["Освой стартовую область.","Открой лаборатории и ключевые помещения.","Активируй питание и проверь системы.","Собери необходимые предметы.","Выполняй задачи по одной."]],
+["Gorod Krovi","Городская карта с опасными открытыми участками.",["Набери очки и открой маршруты.","Изучи транспорт и станции.","Подготовь оружие для открытых участков.","Выполняй задания и проверяй прогресс.","Перед финальной целью пополни боезапас."]],
+["Revelations","Карта с переходами между знакомыми зонами.",["Изучи стартовую зону.","Открывай участки, сохраняя очки.","Проверь механизмы и станции.","Собери предметы по подсказкам.","Заверши основные этапы."]],
+["Kino der Toten","Классический театр.",["Набери очки в стартовой комнате.","Открой театр и включи питание.","Проверь ловушки и станции.","Выбери круговой маршрут.","Пополняй боезапас и улучшай оружие."]]
+];
+let selected=0;
+const grid=document.getElementById('mapgrid');
+maps.forEach((m,i)=>{
+let b=document.createElement('button');
+b.className='mapbtn';
+b.innerHTML='<strong>'+m[0]+'</strong><span class="small">Описание и этапы</span>';
+b.onclick=()=>selectMap(i);
+grid.appendChild(b);
+});
+function selectMap(i){
+selected=i;
+let m=maps[i];
+document.getElementById('maptitle').textContent=m[0];
+document.getElementById('mapdesc').textContent=m[1];
+document.getElementById('stepheading').textContent='Шаги: '+m[0];
+document.getElementById('stepcontent').innerHTML=m[2].map((s,j)=>'<div class="step"><span class="num">'+(j+1)+'</span><span>'+s+'</span></div>').join('');
+}
+function openSteps(){selectMap(selected);showTab('steps')}
+function nextMap(){selectMap((selected+1)%maps.length)}
+function showTab(id){
+document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===id));
+document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+const checks=['Открыть ближайший проход','Проверить питание и механизмы','Купить подходящее оружие','Пополнить боезапас','Проверить текущую цель','Подготовить безопасный маршрут'];
+document.getElementById('checks').innerHTML=checks.map((s,i)=>'<label class="check"><input type="checkbox" id="c'+i+'"><span>'+s+'</span></label>').join('');
+function resetChecks(){checks.forEach((_,i)=>document.getElementById('c'+i).checked=false)}
+document.getElementById('volume').oninput=e=>document.getElementById('volnum').textContent=e.target.value;
+function saveSettings(){
+localStorage.setItem('vol',document.getElementById('volume').value);
+localStorage.setItem('sound',document.getElementById('sound').checked);
+document.getElementById('saved').textContent='Настройки сохранены на устройстве.';
+}
+try{
+let v=localStorage.getItem('vol');
+if(v!==null){document.getElementById('volume').value=v;document.getElementById('volnum').textContent=v;}
+let s=localStorage.getItem('sound');
+if(s!==null)document.getElementById('sound').checked=s==='true';
+}catch(e){}
+selectMap(0);
+</script>
+</body>
+  </html>
