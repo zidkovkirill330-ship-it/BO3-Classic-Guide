@@ -3,6 +3,9 @@ name: Build BO3 Classic APK
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,10 +24,10 @@ jobs:
         run: |
           echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
           echo "/usr/local/lib/android/sdk/platform-tools" >> "$GITHUB_PATH"
+          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Install Android SDK packages
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
             "platform-tools" \
             "platforms;android-35" \
@@ -38,9 +41,11 @@ jobs:
       - name: Build APK
         run: gradle assembleDebug
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Upload APK to Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: BO3-Classic-Guide-APK
-          path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          tag_name: v1.0.0
+          name: BO3 Classic Guide v1.0.0
+          body: BO3 Zombies — Классический гид
+          files: app/build/outputs/apk/debug/*.apk
+          make_latest: true
