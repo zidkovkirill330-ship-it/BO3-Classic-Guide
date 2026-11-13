@@ -1,10 +1,7 @@
-name: Build BO3 Classic APK
+name: Build BO3 Classic Release APK
 
 on:
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   build:
@@ -24,7 +21,8 @@ jobs:
         run: |
           echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> "$GITHUB_ENV"
           echo "/usr/local/lib/android/sdk/platform-tools" >> "$GITHUB_PATH"
-          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
 
       - name: Install Android SDK packages
         run: |
@@ -38,14 +36,35 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Build APK
-        run: gradle assembleDebug
+      - name: Create signing key
+        run: |
+          keytool -genkeypair \
+            -v \
+            -keystore release-key.jks \
+            -alias bo3classic \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass bo3classic123 \
+            -keypass bo3classic123 \
+            -dname "CN=BO3 Classic Guide, OU=BO3, O=BO3 Classic, L=Unknown, S=Unknown, C=US"
 
-      - name: Upload APK to Release
-        uses: softprops/action-gh-release@v2
+      - name: Build release APK
+        run: |
+          gradle assembleRelease \
+            -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/release-key.jks" \
+            -Pandroid.injected.signing.store.password=bo3classic123 \
+            -Pandroid.injected.signing.key.alias=bo3classic \
+            -Pandroid.injected.signing.key.password=bo3classic123
+
+      - name: Rename APK
+        run: |
+          mv app/build/outputs/apk/release/app-release.apk \
+             app/build/outputs/apk/release/BO3-Classic-Guide-v1.0.0.apk
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: v1.0.0
-          name: BO3 Classic Guide v1.0.0
-          body: BO3 Zombies — Классический гид
-          files: app/build/outputs/apk/debug/*.apk
-          make_latest: true
+          name: BO3-Classic-Guide-Release
+          path: app/build/outputs/apk/release/BO3-Classic-Guide-v1.0.0.apk
+          if-no-files-found: error
